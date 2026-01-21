@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.80",
     "@webgpu/types": "^0.1.40",
+    "onnxruntime-web": "^1.17.0",
     "ipfs-core": "^0.18.1",
     "multiformats": "^13.0.0",
     "cbor-x": "^1.5.4"

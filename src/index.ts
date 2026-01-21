@@ -54,6 +54,9 @@ export { DiffusionPipeline } from './models/DiffusionPipeline';
 export { GreedyMesher, LODManager } from './utils/GreedyMesher';
 export { IPFSStorage, CollabSync } from './utils/IPFSStorage';
 
+// API Providers
+export * from './api';
+
 /**
  * Quick start helper - creates a fully initialized VOXGEN world
  *
