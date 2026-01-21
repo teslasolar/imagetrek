@@ -222,12 +222,21 @@ function stop(): void {
  * Main entry point
  */
 async function main(): Promise<void> {
+  console.log('VOXGEN starting...');
+
   try {
     // Show loading
     updateStatus('Initializing WebGPU...');
+    console.log('Checking WebGPU support...');
+
+    if (!navigator.gpu) {
+      throw new Error('WebGPU not supported in this browser');
+    }
+    console.log('WebGPU supported, initializing...');
 
     // Initialize app
     app = await init();
+    console.log('App initialized successfully');
 
     // Generate initial content
     updateStatus('Generating initial world...');

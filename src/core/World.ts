@@ -71,13 +71,7 @@ export class World {
         return false;
       }
 
-      this.device = await this.adapter.requestDevice({
-        requiredFeatures: [],
-        requiredLimits: {
-          maxStorageBufferBindingSize: 1024 * 1024 * 1024, // 1GB
-          maxBufferSize: 1024 * 1024 * 1024,
-        },
-      });
+      this.device = await this.adapter.requestDevice();
 
       await this.loadModels();
       this.emit('init', { success: true });

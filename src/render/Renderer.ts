@@ -29,6 +29,7 @@ interface RenderState {
 
   uniformBuffer: GPUBuffer;
   voxelBuffer: GPUBuffer;
+  voxelCountBuffer: GPUBuffer;
   uniformBindGroup: GPUBindGroup;
 
   sampler: GPUSampler;
@@ -95,6 +96,12 @@ export class Renderer {
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
+    // Create voxel count buffer (separate for bind group compatibility)
+    const voxelCountBuffer = device.createBuffer({
+      size: 4,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+
     // Create voxel storage buffer
     const voxelBuffer = device.createBuffer({
       size: 1024 * 1024, // 1MB for voxel data
@@ -147,7 +154,7 @@ export class Renderer {
       entries: [
         { binding: 0, resource: { buffer: uniformBuffer } },
         { binding: 1, resource: { buffer: voxelBuffer } },
-        { binding: 2, resource: { buffer: uniformBuffer, offset: 192, size: 4 } },
+        { binding: 2, resource: { buffer: voxelCountBuffer } },
       ],
     });
 
@@ -213,6 +220,7 @@ export class Renderer {
       compositePipeline,
       uniformBuffer,
       voxelBuffer,
+      voxelCountBuffer,
       uniformBindGroup,
       sampler,
       defaultTexture,
@@ -309,7 +317,7 @@ export class Renderer {
 
     // Write voxel count
     const countData = new Uint32Array([voxelCount]);
-    device.queue.writeBuffer(this.state.uniformBuffer, 192, countData);
+    device.queue.writeBuffer(this.state.voxelCountBuffer, 0, countData);
   }
 
   /**
