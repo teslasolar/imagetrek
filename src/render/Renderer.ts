@@ -334,7 +334,7 @@ export class Renderer {
     const commandEncoder = device.createCommandEncoder();
     const textureView = context.getCurrentTexture().createView();
 
-    // Ray march pass
+    // Ray march pass (no depth needed for fullscreen quad)
     const renderPass = commandEncoder.beginRenderPass({
       colorAttachments: [{
         view: textureView,
@@ -342,12 +342,6 @@ export class Renderer {
         loadOp: 'clear',
         storeOp: 'store',
       }],
-      depthStencilAttachment: {
-        view: depthTexture.createView(),
-        depthClearValue: 1.0,
-        depthLoadOp: 'clear',
-        depthStoreOp: 'store',
-      },
     });
 
     renderPass.setPipeline(rayMarchPipeline);
