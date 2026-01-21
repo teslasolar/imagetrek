@@ -7,6 +7,11 @@
  * @module voxgen
  */
 
+// Import for internal use
+import { World as WorldClass } from './core/World';
+import { Renderer as RendererClass } from './render/Renderer';
+import { DiffusionPipeline as DiffusionPipelineClass } from './models/DiffusionPipeline';
+
 // Core classes
 export { Gen } from './core/Gen';
 export { Block } from './core/Block';
@@ -62,21 +67,17 @@ export { IPFSStorage, CollabSync } from './utils/IPFSStorage';
  * ```
  */
 export async function createWorld(canvas: HTMLCanvasElement): Promise<{
-  world: World;
-  renderer: Renderer;
-  pipeline: DiffusionPipeline;
+  world: WorldClass;
+  renderer: RendererClass;
+  pipeline: DiffusionPipelineClass;
 }> {
-  const { World } = await import('./core/World');
-  const { Renderer } = await import('./render/Renderer');
-  const { DiffusionPipeline } = await import('./models/DiffusionPipeline');
-
-  const world = new World();
+  const world = new WorldClass();
   await world.init();
 
-  const renderer = new Renderer(canvas, world);
+  const renderer = new RendererClass(canvas, world);
   await renderer.init();
 
-  const pipeline = new DiffusionPipeline();
+  const pipeline = new DiffusionPipelineClass();
   const device = world.getDevice();
   if (device) {
     await pipeline.init(device);

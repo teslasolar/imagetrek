@@ -27,7 +27,7 @@ export interface LoRA {
 }
 
 export interface GenerationParams {
-  prompt: string;
+  prompt?: string;
   negativePrompt?: string;
   seed?: number;
   steps?: number;

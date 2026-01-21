@@ -217,7 +217,8 @@ export class IPFSStorage {
    * Hash data to create content address
    */
   private async hashData(data: Uint8Array): Promise<string> {
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data as any);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
@@ -296,7 +297,8 @@ export class IPFSStorage {
     }
 
     // Create download link
-    const blob = new Blob([data], { type: 'application/octet-stream' });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const blob = new Blob([data as any], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
