@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VOXGEN - WebGPU Voxel World Generator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      overflow: hidden;
+    }
+
+    #canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .ui-overlay {
+      position: fixed;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .ui-overlay > * {
+      pointer-events: auto;
+    }
+
+    #header {
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 24px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #logo {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #d946ef);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    #status {
+      font-size: 14px;
+      color: #888;
+    }
+
+    #controls {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 24px;
+      background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+    }
+
+    .control-row {
+      display: flex;
+      gap: 12px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    #prompt {
+      flex: 1;
+      padding: 14px 20px;
+      font-size: 16px;
+      border: 2px solid #333;
+      border-radius: 12px;
+      background: rgba(20, 20, 30, 0.9);
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #prompt:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    }
+
+    #prompt::placeholder {
+      color: #666;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    #sidebar {
+      top: 80px;
+      right: 24px;
+      width: 200px;
+    }
+
+    .panel {
+      background: rgba(20, 20, 30, 0.9);
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .panel-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    #stats {
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .model-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .model-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .model-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #333;
+    }
+
+    .model-indicator.active {
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    }
+
+    #help {
+      bottom: 100px;
+      left: 24px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    #help kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      font-family: inherit;
+      margin: 0 2px;
+    }
+
+    .cascade-indicator {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .cascade-step {
+      width: 24px;
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+      transition: background 0.3s;
+    }
+
+    .cascade-step.active {
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .generating {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* WebGPU not supported fallback */
+    #no-webgpu {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      padding: 40px;
+      background: rgba(20, 20, 30, 0.95);
+      border: 1px solid #333;
+      border-radius: 16px;
+      max-width: 400px;
+    }
+
+    #no-webgpu h2 {
+      color: #ef4444;
+      margin-bottom: 16px;
+    }
+
+    #no-webgpu p {
+      color: #888;
+      line-height: 1.6;
+    }
+
+    #no-webgpu a {
+      color: #6366f1;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div id="header" class="ui-overlay">
+    <div id="logo">VOXGEN</div>
+    <div id="status">Initializing...</div>
+  </div>
+
+  <div id="sidebar" class="ui-overlay">
+    <div class="panel">
+      <div class="panel-title">Statistics</div>
+      <div id="stats">
+        Blocks: 0<br>
+        Voxels: 0<br>
+        Queue: 0
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Models</div>
+      <div class="model-list">
+        <div class="model-item">
+          <span class="model-indicator active"></span>
+          <span>SD 1.5 (512px)</span>
+        </div>
+        <div class="model-item">
+          <span class="model-indicator active"></span>
+          <span>SDXL (1024px)</span>
+        </div>
+        <div class="model-item">
+          <span class="model-indicator"></span>
+          <span>Flux (any)</span>
+        </div>
+      </div>
+      <div class="cascade-indicator">
+        <div class="cascade-step active"></div>
+        <div class="cascade-step active"></div>
+        <div class="cascade-step"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="help" class="ui-overlay">
+    <kbd>Click + Drag</kbd> Rotate &nbsp;
+    <kbd>Scroll</kbd> Zoom &nbsp;
+    <kbd>Space</kbd> Generate
+  </div>
+
+  <div id="controls" class="ui-overlay">
+    <div class="control-row">
+      <input type="text" id="prompt" placeholder="Describe your voxel world... (e.g., crystal cave with glowing gems)" value="crystal cave with glowing gems">
+      <button class="btn btn-primary" onclick="handleGenerate()">Generate</button>
+      <button class="btn btn-secondary" onclick="handleClear()">Clear</button>
+    </div>
+  </div>
+
+  <div id="no-webgpu">
+    <h2>WebGPU Not Available</h2>
+    <p>
+      VOXGEN requires WebGPU to run. Please use a browser that supports WebGPU, such as:
+    </p>
+    <ul style="text-align: left; margin: 16px 0; color: #888;">
+      <li>Chrome 113+</li>
+      <li>Edge 113+</li>
+      <li>Firefox Nightly (with flags)</li>
+    </ul>
+    <p>
+      <a href="https://caniuse.com/webgpu" target="_blank">Check WebGPU support</a>
+    </p>
+  </div>
+
+  <script>
+    // Check WebGPU support
+    if (!navigator.gpu) {
+      document.getElementById('no-webgpu').style.display = 'block';
+      document.getElementById('canvas').style.display = 'none';
+    }
+
+    // UI handlers
+    function handleGenerate() {
+      const prompt = document.getElementById('prompt').value;
+      if (prompt && window.voxgen) {
+        // Generate at a random position near origin
+        const x = Math.floor(Math.random() * 3) * 8;
+        const y = Math.floor(Math.random() * 2) * 8;
+        const z = Math.floor(Math.random() * 3) * 8;
+        window.voxgen.generate(prompt, { x, y, z });
+      }
+    }
+
+    function handleClear() {
+      // Reload page to clear
+      if (confirm('Clear all generated content?')) {
+        location.reload();
+      }
+    }
+
+    // Enter key to generate
+    document.getElementById('prompt').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        handleGenerate();
+      }
+    });
+  </script>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

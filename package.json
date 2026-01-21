@@ -1,0 +1,29 @@
+{
+  "name": "voxgen",
+  "version": "0.1.0",
+  "description": "WebGPU-based infinite voxel world generator with diffusion model cascades",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@webgpu/types": "^0.1.40",
+    "ipfs-core": "^0.18.1",
+    "multiformats": "^13.0.0",
+    "cbor-x": "^1.5.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10"
+  },
+  "keywords": [
+    "webgpu",
+    "voxel",
+    "diffusion",
+    "generative",
+    "3d"
+  ]
+}
